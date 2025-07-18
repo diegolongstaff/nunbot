@@ -59,7 +59,7 @@ def create_search_prompt(user_description, procedures_data):
     """Create a prompt for OpenAI to find matching procedure codes"""
     
     # Get a sample of procedures for context
-    sample_procedures = procedures_data.head(20)
+    sample_procedures = procedures_data.head(40)
     procedures_context = []
     
     for _, row in sample_procedures.iterrows():
@@ -70,9 +70,43 @@ def create_search_prompt(user_description, procedures_data):
             "complejidad": row.get('Complejidad', ''),
             "palabras_clave": row.get('Palabras clave', '')
         })
-    
+        # Glosario médico contextual para mejorar la interpretación semántica
+    glosario = """
+Glosario anatómico y sistema de codificación del NUN (Nomenclador Único Nacional):
+
+El NUN organiza los procedimientos quirúrgicos por región anatómica, utilizando abreviaciones. Estas son las principales:
+
+- MS → Miembro Superior (clavícula, húmero, codo, antebrazo, muñeca, mano, dedos)
+- CO → Columna (cervical, dorsal, lumbar, sacra)
+- PC → Pelvis y Cadera (fémur proximal, acetábulo, sacro)
+- RO → Rodilla (patela, cóndilos femorales, platillos tibiales, ligamentos cruzados)
+- PP → Pierna y Pie (tibia, peroné, tobillo, astrágalo, calcáneo, metatarsianos, falanges)
+
+Además, hay sinónimos comunes que deben interpretarse correctamente:
+
+- "Fractura de cadera" → fractura de fémur proximal → buscar en PC
+- "Fractura de muñeca" → radio distal → buscar en MS
+- "Fractura de hombro" → húmero proximal → buscar en MS
+- "Fractura de tobillo" → maleolo → buscar en PP
+- "Fractura de pelvis" → rama isquiopubiana, acetábulo → buscar en PC
+- "Fractura de espalda" → columna cervica, dorsal o lumbar → buscar en CO
+
+EJEMPLO DE EQUIVALENCIA:
+Entrada: "fractura de cadera"
+Interpretación esperada: "fractura de fémur proximal", región PC
+"""
     prompt = f"""
-Eres un asistente médico especializado en traumatología y ortopedia. Tu tarea es analizar una descripción de procedimiento quirúrgico y encontrar los códigos NUN (Nomenclador Único Nacional) más apropiados.
+    {glosario}
+Eres un asistente médico especializado en traumatología y ortopedia. Tu tarea es analizar una descripción libre del procedimiento quirúrgico e identificar correctamente:
+
+1. La región anatómica afectada (según el sistema NUN).
+2. El tipo de fractura o lesión.
+3. La técnica quirúrgica mencionada.
+
+Luego, seleccioná los 3 a 5 códigos NUN más apropiados, tomando en cuenta:
+- La región codificada (MS, CO, PC, RO, PP).
+- La descripción textual.
+- La complejidad y técnica si se menciona.
 
 DESCRIPCIÓN DEL PROCEDIMIENTO INGRESADA POR EL MÉDICO:
 "{user_description}"
@@ -82,10 +116,11 @@ CONTEXTO DE CÓDIGOS NUN DISPONIBLES (muestra):
 
 INSTRUCCIONES:
 1. Analiza la descripción del procedimiento médico
-2. Identifica las palabras clave médicas relevantes (anatomía, técnica quirúrgica, tipo de lesión, etc.)
-3. Busca en tu conocimiento los códigos NUN que mejor coincidan con la descripción
-4. Considera la región anatómica, complejidad y tipo de procedimiento
-5. Devuelve EXACTAMENTE 3-5 códigos más probables, ordenados por relevancia
+2. Usa el glosario anterior para interpretar términos amplios como "cadera", "muñeca", "tobillo", etc. 
+3. Identifica las palabras clave médicas relevantes (anatomía, técnica quirúrgica, tipo de lesión, etc.)
+4. Busca en tu conocimiento los códigos NUN que mejor coincidan con la descripción
+5. Considera la región anatómica, complejidad y tipo de procedimiento
+6. Devuelve EXACTAMENTE 3 a 6 códigos más probables, ordenados por relevancia
 
 FORMATO DE RESPUESTA (JSON obligatorio):
 {{
@@ -120,7 +155,7 @@ def query_openai_for_codes(client, user_description, procedures_data):
             messages=[
                 {
                     "role": "system",
-                    "content": "Eres un experto en códigos NUN para traumatología. Responde siempre en formato JSON válido."
+                    "content": "Sos un experto en codificación quirúrgica. Siempre usá el glosario proporcionado para traducir términos generales como 'cadera', 'muñeca' o 'hombro' en términos anatómicos precisos del Nomenclador Único Nacional. Responde siempre en JSON válido."
                 },
                 {
                     "role": "user",
