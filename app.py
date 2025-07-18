@@ -58,24 +58,11 @@ def load_nun_data():
 def create_search_prompt(user_description, procedures_data):
     """Create a prompt for OpenAI to find matching procedure codes"""
     
-    # Get a balanced sample of procedures from each region for context
-    regions = ['MS', 'CO', 'PC', 'RO', 'PP']
+    # Include ALL procedures for comprehensive search
+    # This ensures the AI has access to the complete database
     procedures_context = []
     
-    for region in regions:
-        region_procedures = procedures_data[procedures_data['Región'] == region].head(6)
-        for _, row in region_procedures.iterrows():
-            procedures_context.append({
-                "codigo": row['Código'],
-                "descripcion": row['Descripción'],
-                "region": row.get('Región', ''),
-                "complejidad": row.get('Complejidad', ''),
-                "palabras_clave": row.get('Palabras clave', '')
-            })
-    
-    # Add some additional high-complexity procedures for context
-    complex_procedures = procedures_data[procedures_data['Complejidad'] > 2].head(5)
-    for _, row in complex_procedures.iterrows():
+    for _, row in procedures_data.iterrows():
         procedures_context.append({
             "codigo": row['Código'],
             "descripcion": row['Descripción'],
@@ -105,17 +92,18 @@ EJEMPLOS DE INTERPRETACIÓN ANATÓMICA:
 - "Fractura de espalda" → columna lumbar/dorsal → región **CO**
 - "Fractura de rodilla" → patela o cóndilos → región **RO**
 
-CONTEXTO DE CÓDIGOS NUN DISPONIBLES (muestra):
+CONTEXTO DE CÓDIGOS NUN DISPONIBLES (base de datos completa):
 {json.dumps(procedures_context, ensure_ascii=False, indent=2)}
 
 INSTRUCCIONES:
 1. Analiza la descripción del procedimiento médico
 2. Identifica la región anatómica correcta usando el glosario médico contextual
-3. Busca en la lista de códigos NUN disponibles los que mejor coincidan
+3. Busca en la base de datos completa de códigos NUN los que mejor coincidan
 4. PRIORIZA códigos de la región anatómica correcta identificada
-5. Identifica palabras clave médicas relevantes (anatomía, técnica quirúrgica, tipo de lesión, etc.)
-6. Considera la complejidad y tipo de procedimiento
-7. Devuelve EXACTAMENTE 3-5 códigos más probables, ordenados por relevancia y confianza
+5. Busca coincidencias EXACTAS en las descripciones primero
+6. Identifica palabras clave médicas relevantes (anatomía, técnica quirúrgica, tipo de lesión, etc.)
+7. Considera la complejidad y tipo de procedimiento
+8. Devuelve EXACTAMENTE 3-5 códigos más probables, ordenados por relevancia y confianza
 
 FORMATO DE RESPUESTA (JSON obligatorio):
 {{
@@ -129,12 +117,14 @@ FORMATO DE RESPUESTA (JSON obligatorio):
 }}
 
 IMPORTANTE:
-- Solo sugiere códigos que existan en el nomenclador NUN
+- Solo sugiere códigos que existan en el nomenclador NUN proporcionado
 - PRIORIZA códigos de la región anatómica correcta
+- Busca coincidencias EXACTAS en las descripciones antes que aproximadas
 - La confianza debe ser un número entre 0 y 1
 - Ordena por relevancia (más relevante primero)
 - Responde SOLO en formato JSON
-- Si no encuentras coincidencias claras, sugiere los códigos más cercanos de la región apropiada
+- Para "forage de cadera" busca específicamente códigos que contengan "forage" y "cadera"
+- Si no encuentras coincidencias exactas, sugiere los códigos más cercanos de la región apropiada
 """
     
     return prompt
