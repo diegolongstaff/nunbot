@@ -124,16 +124,16 @@ IMPORTANTE:
 def create_search_prompt(user_description, filtered_procedures):
     """Step 2: Create a prompt for OpenAI to find matching procedure codes from filtered region"""
     
-    # Convert filtered procedures to context
-    procedures_context = []
+    # Convert filtered procedures to compact text format
+    procedures_list = []
     for _, row in filtered_procedures.iterrows():
-        procedures_context.append({
-            "codigo": row['Código'],
-            "descripcion": row['Descripción'],
-            "region": row.get('Región', ''),
-            "complejidad": row.get('Complejidad', ''),
-            "palabras_clave": row.get('Palabras clave', '')
-        })
+        codigo = row['Código']
+        descripcion = row['Descripción']
+        # Create compact format: CODE - DESCRIPTION
+        procedures_list.append(f"{codigo} - {descripcion}")
+    
+    # Join all procedures into a single string
+    procedures_text = "\n".join(procedures_list)
     
     prompt = f"""
 Eres un asistente médico especializado en traumatología y ortopedia. Tu tarea es encontrar los códigos NUN más apropiados para el procedimiento descrito.
@@ -141,8 +141,8 @@ Eres un asistente médico especializado en traumatología y ortopedia. Tu tarea 
 DESCRIPCIÓN DEL PROCEDIMIENTO:
 "{user_description}"
 
-CÓDIGOS NUN DISPONIBLES EN LA REGIÓN ANATÓMICA IDENTIFICADA:
-{json.dumps(procedures_context, ensure_ascii=False, indent=2)}
+LISTA DE PROCEDIMIENTOS POSIBLES:
+{procedures_text}
 
 INSTRUCCIONES:
 1. Analiza la descripción del procedimiento médico
@@ -198,6 +198,8 @@ def query_openai_for_codes(client, user_description, procedures_data):
     st.info(f"🔎 Buscando entre {len(filtered_procedures)} procedimientos de la región {region}...")
     
     # Step 3: Search within filtered procedures
+    # Log token optimization
+    logger.info(f"Token optimization: Searching within {len(filtered_procedures)} procedures instead of full dataset ({len(procedures_data)} procedures)")
     try:
         prompt = create_search_prompt(user_description, filtered_procedures)
         

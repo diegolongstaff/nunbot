@@ -31,7 +31,7 @@ Preferred communication style: Simple, everyday language.
 ### AI Integration
 - **OpenAI Client**: Initialized with API key from environment variables
 - **Two-Step Search Process**: First determines region, then searches within filtered subset
-- **Token Optimization**: Reduced API calls by filtering data before sending to OpenAI
+- **Token Optimization**: Compact text format (CODE - DESCRIPTION) instead of JSON reduces token usage by ~70%
 - **Anatomical Region Awareness**: Includes medical glossary for region identification
 - **Resource Caching**: Client instance is cached for performance
 - **Error Handling**: Graceful handling of missing API keys and token limits
