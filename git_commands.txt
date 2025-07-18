@@ -1,0 +1,53 @@
+# Comandos Git para Subir NUNBot a GitHub
+
+## Estado Actual
+- Repositorio git ya inicializado
+- Archivos preparados para GitHub
+- Git lock resuelto
+
+## Comandos a Ejecutar en Terminal:
+
+### 1. Verificar estado actual
+git status
+
+### 2. Agregar archivos nuevos
+git add README.md requirements.txt .gitignore streamlit_config.toml DEPLOYMENT.md git_commands.txt
+
+### 3. Commit con mensaje descriptivo
+git commit -m "feat: Preparar NUNBot para GitHub
+
+- Agregar README.md con documentación completa del proyecto
+- Crear requirements.txt con dependencias Python
+- Configurar .gitignore para archivos sensibles
+- Incluir configuración de Streamlit
+- Sistema optimizado de búsqueda en 2 pasos que reduce tokens 70%
+- Guía completa de despliegue en DEPLOYMENT.md"
+
+### 4. Configurar repositorio remoto (si no existe)
+git remote add origin https://github.com/diegolongstaff/nunbot.git
+
+### 5. Subir al repositorio
+git push -u origin main
+
+## Verificación Post-Upload
+- Verificar que todos los archivos estén en GitHub
+- Comprobar que no hay claves API expuestas
+- Revisar que el README.md se muestre correctamente
+
+## Próximos Pasos (Después del Push)
+1. Ir a https://share.streamlit.io
+2. Conectar cuenta de GitHub
+3. Seleccionar repositorio: diegolongstaff/nunbot
+4. Configurar app.py como archivo principal
+5. Agregar OPENAI_API_KEY en secrets
+6. Deploy automático
+
+## Archivos Incluidos en el Repositorio:
+✅ app.py - Aplicación principal
+✅ nun_procedimientos.csv - Base de datos NUN
+✅ README.md - Documentación completa
+✅ requirements.txt - Dependencias
+✅ .gitignore - Archivos excluidos
+✅ streamlit_config.toml - Configuración Streamlit
+✅ DEPLOYMENT.md - Guía de despliegue
+✅ git_commands.txt - Este archivo
