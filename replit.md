@@ -30,10 +30,11 @@ Preferred communication style: Simple, everyday language.
 
 ### AI Integration
 - **OpenAI Client**: Initialized with API key from environment variables
+- **Two-Step Search Process**: First determines region, then searches within filtered subset
+- **Token Optimization**: Reduced API calls by filtering data before sending to OpenAI
 - **Anatomical Region Awareness**: Includes medical glossary for region identification
-- **Smart Context Sampling**: Balanced procedure samples from each anatomical region
 - **Resource Caching**: Client instance is cached for performance
-- **Error Handling**: Graceful handling of missing API keys with user feedback
+- **Error Handling**: Graceful handling of missing API keys and token limits
 
 ### User Interface
 - **Page Configuration**: Medical-themed with hospital icon
@@ -52,9 +53,10 @@ Preferred communication style: Simple, everyday language.
    - Convert currency columns (Cirujano, Ayudantes, Total) to numeric format
    - Handle missing values with appropriate defaults
 
-3. **Search Process**:
-   - User queries processed through OpenAI API with anatomical region awareness
-   - AI identifies anatomical region using medical glossary
+3. **Search Process** (Two-Step Approach):
+   - **Step 1:** AI determines anatomical region using medical glossary (lightweight API call)
+   - **Step 2:** Filter procedures by identified region to reduce dataset size
+   - **Step 3:** AI searches within filtered subset for specific codes (optimized API call)
    - Results prioritized by region match and relevance
    - Display formatted results to user with confidence scores
 
