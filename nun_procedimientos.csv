@@ -1,0 +1,74 @@
+Código,Descripción,Región,Complejidad,Palabras clave,Cirujano,Ayudantes,Total
+MS.01.01,Infiltración diagnóstica o terapéutica,MS,1,"diagnóstica, infiltración, terapéutica",83581,0,83581
+MS.01.02,"Inmovilizaciones enyesadas, yesos localizadores. Confección y aplicación de una férula dinámica (para un dedo o más de uno)",MS,1,"aplicación, confección, dedo, dinámica, enyesadas, férula, inmovilizaciones, localizadores, para, yesos",83581,0,83581
+MS.01.03,"Sutura de herida simple, no quirúrgica.",MS,1,"herida, quirúrgica, simple, sutura",83581,0,83581
+MS.01.04,Extracción de osteodesis percutáneas en consultorio.,MS,1,"consultorio, extracción, osteodesis, percutáneas",83581,0,83581
+MS.01.05,Movilización articular con anestesia.,MS,1,"anestesia, articular, movilización",83581,0,83581
+MS.01.06,Extirpación de una uña (como único procedimiento),MS,1,"como, extirpación, procedimiento, único",83581,0,83581
+MS.01.07,"Bloqueo anestésico del plexo braquial, de un nervio periférico o del simpático cervical  (como único procedimiento), por cada sesión.",MS,1,"anestésico, bloqueo, braquial, cada, cervical, como, nervio, periférico, plexo, procedimiento, sesión, simpático, único",83581,0,83581
+MS.01.08,Ligadura arterial o venosa (como único procedimiento),MS,1,"arterial, como, ligadura, procedimiento, venosa, único",83581,0,83581
+MS.01.09,Arteriografía o flexografía por punción o a cielo abierto (como único procedimiento),MS,1,"abierto, arteriografía, cielo, como, flexografía, procedimiento, punción, único",83581,0,83581
+MS.01.10,"Drenaje, biopsia o extirpación de una adenopatía cervical, axilar o epitroclear.",MS,1,"adenopatía, axilar, biopsia, cervical, drenaje, epitroclear, extirpación",83581,0,83581
+MS.01.11,"Drenaje de un hematoma subungueal, por medio de la perforación única o múltiple de la uña.",MS,1,"drenaje, hematoma, medio, múltiple, perforación, subungueal, única",83581,0,83581
+MS.01.12,Abordaje quirúrgico y evacuación de un hematoma subcutáneo supraponeurótico.,MS,1,"abordaje, evacuación, hematoma, quirúrgico, subcutáneo, supraponeurótico",83581,0,83581
+MS.01.13,"Artrografía o artroneumografía por punción, en medio quirúrgico y con intensificador de  imágenes.",MS,1,"artrografía, artroneumografía, imágenes, intensificador, medio, punción, quirúrgico",83581,0,83581
+MS.01.14,Tracción de partes blandas.,MS,1,"blandas, partes, tracción",83581,0,83581
+MS.01.15,Examen radiológico con anestesia (general o regional),MS,1,"anestesia, examen, general, radiológico, regional",83581,0,83581
+MS.01.16,Cualquier otra práctica incruenta no especificada en los anteriores puntos.,MS,1,"anteriores, cualquier, especificada, incruenta, otra, práctica, puntos",83581,0,83581
+RO.01.01,Infiltración. Artrocentesis.,RO,1,"artrocentesis, infiltración",83581,0,83581
+RO.01.02,"Calza de yeso, férula posterior.",RO,1,"calza, férula, posterior, yeso",83581,0,83581
+RO.01.03,"Sutura de herida simple, no quirúrgica.",RO,1,"herida, quirúrgica, simple, sutura",83581,0,83581
+RO.01.04,Extracción de osteodesis percutánea en consultorio.,RO,1,"consultorio, extracción, osteodesis, percutánea",83581,0,83581
+RO.01.05,Tracción partes blandas alrededor de la rodilla.,RO,1,"alrededor, blandas, partes, rodilla, tracción",83581,0,83581
+RO.01.06,Reducción incruenta intraarticular.,RO,1,"incruenta, intraarticular, reducción",83581,0,83581
+RO.01.07,Movilización bajo anestesia.,RO,1,"anestesia, bajo, movilización",83581,0,83581
+RO.01.08,"Artrografía o artroneumografía por punción, en medio quirúrgico y con intensificador de  imágenes",RO,1,"artrografía, artroneumografía, imágenes, intensificador, medio, punción, quirúrgico",83581,0,83581
+PP.01.01,Infiltraciones. Artrocentesis evacuadora.,PP,1,"artrocentesis, evacuadora, infiltraciones",83581,0,83581
+PP.01.02,Inmovilizaciones enyesadas.,PP,1,"enyesadas, inmovilizaciones",83581,0,83581
+PP.01.03,"Sutura de herida simple, no quirúrgica.",PP,1,"herida, quirúrgica, simple, sutura",83581,0,83581
+PP.01.04,"Extracción de osteodesis percutáneas, en consultorio.",PP,1,"consultorio, extracción, osteodesis, percutáneas",83581,0,83581
+PP.01.05,"Drenaje de un hematoma subungueal, por medio de la perforación  uña.",PP,1,"drenaje, hematoma, medio, perforación, subungueal",83581,0,83581
+PP.01.06,Cura oclusiva en pie neuropático.,PP,1,"cura, neuropático, oclusiva",83581,0,83581
+PP.01.07,Tracciones cutáneas.,PP,1,"cutáneas, tracciones",83581,0,83581
+PP.01.08,Movilización bajo anestesia.,PP,1,"anestesia, bajo, movilización",83581,0,83581
+PP.01.09,Evaluación bajo radioscopia en quirófano.,PP,1,"bajo, evaluación, quirófano, radioscopia",83581,0,83581
+PP.01.10,"Artrografía o artroneumografía por punción, en medio quirúrgico y con intensificador de  imágenes.",PP,1,"artrografía, artroneumografía, imágenes, intensificador, medio, punción, quirúrgico",83581,0,83581
+PC.01.01,Infiltraciones. Artrocentesis.,PC,1,"artrocentesis, infiltraciones",83581,0,83581
+PC.01.02,"Sutura de herida simple, no quirúrgica.",PC,1,"herida, quirúrgica, simple, sutura",83581,0,83581
+PC.01.03,Evaluación bajo radioscopia en quirófano.,PC,1,"bajo, evaluación, quirófano, radioscopia",83581,0,83581
+PC.01.04,"Artrografía o artroneumografía por punción, en medio quirúrgico y con intensificador de  imágenes.",PC,1,"artrografía, artroneumografía, imágenes, intensificador, medio, punción, quirúrgico",83581,0,83581
+CO.01.01,Infiltraciones.,CO,1,infiltraciones,83581,0,83581
+CO.01.02,Collar de yeso.,CO,1,"collar, yeso",83581,0,83581
+CO.01.03,"Sutura de herida simple, no quirúrgica.",CO,1,"herida, quirúrgica, simple, sutura",83581,0,83581
+MS.02.01,Yeso toracobraquial.,MS,2,"toracobraquial, yeso",168268,33639,201907
+MS.02.02,Yesos o férulas dinámicos,MS,2,"dinámicos, férulas, yesos",168268,33639,201907
+MS.02.03,"Reducción cerrada de fracturas o luxaciones en forma incruenta, con anestesia local,  plexual o general. Incluye inmovilización enyesada",MS,2,"anestesia, cerrada, enyesada, forma, fracturas, general, incluye, incruenta, inmovilización, local, luxaciones, plexual, reducción",168268,33639,201907
+MS.02.04,Extracción de clavijas percutáneas con anestesia local o general en quirófano,MS,2,"anestesia, clavijas, extracción, general, local, percutáneas, quirófano",168268,33639,201907
+MS.02.05,Tracciones esqueléticas,MS,2,"esqueléticas, tracciones",168268,33639,201907
+MS.02.06,Toilette quirúrgica superficial (supraaponeurótica),MS,2,"quirúrgica, superficial, supraaponeurótica, toilette",168268,33639,201907
+MS.02.07,"Tratamiento de la espasticidad con infiltración con toxina botulínica, hasta 2 grupos  musculares, unilateral o bilateral",MS,2,"bilateral, botulínica, espasticidad, grupos, hasta, infiltración, musculares, toxina, tratamiento, unilateral",168268,33639,201907
+MS.02.08,"Tenotomía de un tendón flexor o extensor en el antebrazo, la muñeca, la mano o un dedo",MS,2,"antebrazo, dedo, extensor, flexor, mano, muñeca, tendón, tenotomía",168268,33639,201907
+MS.02.09,Zetaplastia para corrección de una cicatriz.,MS,2,"cicatriz, corrección, para, zetaplastia",168268,33639,201907
+MS.02.10,Extirpación radical de una uña y la matriz ungueal. Incluye eventual injerto de piel,MS,2,"eventual, extirpación, incluye, injerto, matriz, piel, radical, ungueal",168268,33639,201907
+MS.02.11,Corrección de corrección de irregularidades en el lecho ungueal,MS,2,"corrección, irregularidades, lecho, ungueal",168268,33639,201907
+MS.02.12,"Sección del pedículo de un colgajo. Diferido de un colgajo, por cada tiempo",MS,2,"cada, colgajo, diferido, pedículo, sección, tiempo",168268,33639,201907
+MS.02.13,"Tratamiento de quemaduras: toilette quirúrgica, evacuación de flictenas, descompresión  por medio de incisiones en la piel o escaras cutáneas en medio quirúrgico, con anestesia  o sin ella. Incluye eventual inmovilización. Curación de quemaduras (con anestesia o sin  ella), en medio quirúrgico",MS,2,"anestesia, curación, cutáneas, descompresión, ella, escaras, evacuación, eventual, flictenas, incisiones, incluye, inmovilización, medio, piel, quemaduras, quirúrgico, toilette, tratamiento",168268,33639,201907
+MS.02.14,"Extirpación de una lesión seudotumoral, de la sinovial de una articulación de un dedo.",MS,2,"articulación, dedo, extirpación, lesión, seudotumoral, sinovial",168268,33639,201907
+MS.02.15,"Extirpación de queratoacantoma, hemangioma cutáneo localizado, etc.)",MS,2,"cutáneo, extirpación, hemangioma, localizado, queratoacantoma",168268,33639,201907
+MS.02.16,Extirpación de un ganglión de una vaina tendinosa digital,MS,2,"digital, extirpación, ganglión, tendinosa, vaina",168268,33639,201907
+MS.02.17,Extirpación de un quiste mucoide del dorso de un dedo. Incluye eventual injerto de piel,MS,2,"dedo, dorso, eventual, extirpación, incluye, injerto, mucoide, piel, quiste",168268,33639,201907
+MS.02.18,"Tratamiento quirúrgico de panadizos (antracoide,  del pulpejo o de la 1ª o 2ª falange)",MS,2,"antracoide, falange, panadizos, pulpejo, quirúrgico, tratamiento",168268,33639,201907
+MS.02.19,Abordaje y extracción de un cuerpo extraño de las partes blandas.,MS,2,"abordaje, blandas, cuerpo, extracción, extraño, partes",168268,33639,201907
+MS.02.20,Extracción de tutor externo como,MS,2,"como, externo, extracción, tutor",168268,33639,201907
+RO.02.01,Reducción incruenta inmovilización enyesada,RO,2,"enyesada, incruenta, inmovilización, reducción",168268,33639,201907
+RO.02.02,Reducción de luxación de rótula. Con yeso o sin,RO,2,"luxación, reducción, rótula, yeso",168268,33639,201907
+RO.02.03,Tracciones esqueléticas,RO,2,"esqueléticas, tracciones",168268,33639,201907
+RO.02.04,Toilette quirúrgica superficial (supraaponeurótica),RO,2,"quirúrgica, superficial, supraaponeurótica, toilette",168268,33639,201907
+RO.02.05,"Extracción de osteodesis percutáneas, con anestesia en quirófano",RO,2,"anestesia, extracción, osteodesis, percutáneas, quirófano",168268,33639,201907
+PP.02.01,"Reducciones incruentas o manipulaciones en fracturas o luxaciones, con  plexual o general. Incluye yeso.",PP,2,"fracturas, general, incluye, incruentas, luxaciones, manipulaciones, plexual, reducciones, yeso",168268,33639,201907
+PP.02.02,Extracciones de tutores externos como,PP,2,"como, externos, extracciones, tutores",168268,33639,201907
+PP.02.03,Tratamiento quirúrgico de uña encarnada. Onicectomía parcial o total. Matricectomía  parcial o total (con cruentado,PP,2,"cruentado, encarnada, matricectomía, onicectomía, parcial, quirúrgico, total, tratamiento",168268,33639,201907
+PP.02.04,Evacuación quirúrgica de hematomas y abscesos superficiales.,PP,2,"abscesos, evacuación, hematomas, quirúrgica, superficiales",168268,33639,201907
+PP.02.05,Toilette quirúrgica superficial (supraaponeurótica),PP,2,"quirúrgica, superficial, supraaponeurótica, toilette",168268,33639,201907
+PP.02.06,Curación y/o cruentado de  de muestras),PP,2,"cruentado, curación, muestras",168268,33639,201907
+PP.02.07,Tracciones esqueléticas y revisión parcial (cuadro de Shanz o barra) de tutor externo.,PP,2,"barra, cuadro, esqueléticas, externo, parcial, revisión, shanz, tracciones, tutor",168268,33639,201907
