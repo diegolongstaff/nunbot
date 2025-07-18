@@ -208,17 +208,6 @@ def main():
     st.markdown("**Sistema de búsqueda inteligente para códigos del Nomenclador Único Nacional**")
     st.markdown("*Especialmente diseñado para traumatología y ortopedia*")
     
-    # Statistics
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("📊 Total Procedimientos", len(procedures_data))
-    with col2:
-        regiones = procedures_data['Región'].nunique() if 'Región' in procedures_data.columns else 0
-        st.metric("🗺️ Regiones Anatómicas", regiones)
-    with col3:
-        complejidades = procedures_data['Complejidad'].nunique() if 'Complejidad' in procedures_data.columns else 0
-        st.metric("⚙️ Niveles de Complejidad", complejidades)
-    
     st.divider()
     
     # Input section
