@@ -30,6 +30,8 @@ Preferred communication style: Simple, everyday language.
 
 ### AI Integration
 - **OpenAI Client**: Initialized with API key from environment variables
+- **Anatomical Region Awareness**: Includes medical glossary for region identification
+- **Smart Context Sampling**: Balanced procedure samples from each anatomical region
 - **Resource Caching**: Client instance is cached for performance
 - **Error Handling**: Graceful handling of missing API keys with user feedback
 
@@ -50,10 +52,11 @@ Preferred communication style: Simple, everyday language.
    - Convert currency columns (Cirujano, Ayudantes, Total) to numeric format
    - Handle missing values with appropriate defaults
 
-3. **Search Process** (implied from structure):
-   - User queries processed through OpenAI API
-   - Results filtered from cached DataFrame
-   - Display formatted results to user
+3. **Search Process**:
+   - User queries processed through OpenAI API with anatomical region awareness
+   - AI identifies anatomical region using medical glossary
+   - Results prioritized by region match and relevance
+   - Display formatted results to user with confidence scores
 
 ## External Dependencies
 
@@ -68,8 +71,8 @@ Preferred communication style: Simple, everyday language.
 - `attached_assets/nun_procedimientos_1752847693324.json`: JSON backup/export of procedures
 
 ### External Services
-- **OpenAI API**: For intelligent search capabilities
-- **Environment Variables**: `OPENAI_API_KEY_NUN` for API authentication
+- **OpenAI API**: For intelligent search capabilities with anatomical region awareness
+- **Environment Variables**: `OPENAI_API_KEY` for API authentication
 
 ## Deployment Strategy
 

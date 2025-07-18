@@ -1,0 +1,29 @@
+Estoy desarrollando una webapp en Streamlit para médicos traumatólogos. El objetivo es que el usuario escriba una descripción libre de un procedimiento quirúrgico (por ejemplo, "fractura de cadera con enclavado"), y que la app utilice la API de OpenAI para sugerir los códigos quirúrgicos más probables del Nomenclador Único Nacional (NUN), que tengo cargado en un archivo CSV llamado `nun_procedimientos.csv`.
+
+Este archivo incluye columnas como:
+- Código
+- Descripción
+- Región (abreviada como MS, CO, PC, RO, PP)
+- Complejidad
+- Honorarios Cirujano y Ayudantes
+
+Las regiones están codificadas así:
+- **MS** → Miembro Superior (hombro, húmero, codo, antebrazo, muñeca, mano, dedos)
+- **CO** → Columna (cervical, dorsal, lumbar, sacra)
+- **PC** → Pelvis y Cadera (fémur proximal, acetábulo, sacro)
+- **RO** → Rodilla (patela, cóndilos femorales, platillos tibiales, ligamentos cruzados)
+- **PP** → Pierna y Pie (tibia, peroné, tobillo, calcáneo, astrágalo, metatarsianos, falanges)
+
+Quiero que la IA interprete correctamente la región anatómica a partir de la descripción clínica del médico, usando un glosario médico contextual. Por ejemplo:
+- “Fractura de cadera” → fractura de fémur proximal → región **PC**
+- “Fractura de muñeca” → fractura distal de radio → región **MS**
+- “Fractura de tobillo” → maleolo medial/lateral → región **PP**
+- “Fractura de espalda” → columna lumbar/dorsal → región **CO**
+
+Necesito que me ayudes a:
+1. Incluir este glosario médico como parte del `prompt` enviado al modelo.
+2. Hacer que el modelo priorice sugerencias que coincidan con la **región anatómica correcta**, comparando con la columna `Región` del CSV.
+3. Incluir un ejemplo dentro del `prompt` (como "fractura de cadera = fémur proximal = PC") para que entienda la relación entre términos clínicos y codificación del NUN.
+4. Reescribir el `prompt` actual de forma clara, para que el modelo devuelva 3 a 5 códigos relevantes y en el formato JSON esperado.
+
+¿Podés ayudarme a integrar esta lógica en mi código actual (`app.py`) dentro de la función que arma el prompt para la API de OpenAI?

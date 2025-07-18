@@ -58,11 +58,24 @@ def load_nun_data():
 def create_search_prompt(user_description, procedures_data):
     """Create a prompt for OpenAI to find matching procedure codes"""
     
-    # Get a sample of procedures for context
-    sample_procedures = procedures_data.head(20)
+    # Get a balanced sample of procedures from each region for context
+    regions = ['MS', 'CO', 'PC', 'RO', 'PP']
     procedures_context = []
     
-    for _, row in sample_procedures.iterrows():
+    for region in regions:
+        region_procedures = procedures_data[procedures_data['Región'] == region].head(6)
+        for _, row in region_procedures.iterrows():
+            procedures_context.append({
+                "codigo": row['Código'],
+                "descripcion": row['Descripción'],
+                "region": row.get('Región', ''),
+                "complejidad": row.get('Complejidad', ''),
+                "palabras_clave": row.get('Palabras clave', '')
+            })
+    
+    # Add some additional high-complexity procedures for context
+    complex_procedures = procedures_data[procedures_data['Complejidad'] > 2].head(5)
+    for _, row in complex_procedures.iterrows():
         procedures_context.append({
             "codigo": row['Código'],
             "descripcion": row['Descripción'],
@@ -77,22 +90,39 @@ Eres un asistente médico especializado en traumatología y ortopedia. Tu tarea 
 DESCRIPCIÓN DEL PROCEDIMIENTO INGRESADA POR EL MÉDICO:
 "{user_description}"
 
+GLOSARIO MÉDICO CONTEXTUAL - REGIONES ANATÓMICAS:
+Las regiones están codificadas así en el NUN:
+- **MS** → Miembro Superior (hombro, húmero, codo, antebrazo, muñeca, mano, dedos)
+- **CO** → Columna (cervical, dorsal, lumbar, sacra)
+- **PC** → Pelvis y Cadera (fémur proximal, acetábulo, sacro)
+- **RO** → Rodilla (patela, cóndilos femorales, platillos tibiales, ligamentos cruzados)
+- **PP** → Pierna y Pie (tibia, peroné, tobillo, calcáneo, astrágalo, metatarsianos, falanges)
+
+EJEMPLOS DE INTERPRETACIÓN ANATÓMICA:
+- "Fractura de cadera" → fractura de fémur proximal → región **PC**
+- "Fractura de muñeca" → fractura distal de radio → región **MS**
+- "Fractura de tobillo" → maleolo medial/lateral → región **PP**
+- "Fractura de espalda" → columna lumbar/dorsal → región **CO**
+- "Fractura de rodilla" → patela o cóndilos → región **RO**
+
 CONTEXTO DE CÓDIGOS NUN DISPONIBLES (muestra):
 {json.dumps(procedures_context, ensure_ascii=False, indent=2)}
 
 INSTRUCCIONES:
 1. Analiza la descripción del procedimiento médico
-2. Identifica las palabras clave médicas relevantes (anatomía, técnica quirúrgica, tipo de lesión, etc.)
-3. Busca en tu conocimiento los códigos NUN que mejor coincidan con la descripción
-4. Considera la región anatómica, complejidad y tipo de procedimiento
-5. Devuelve EXACTAMENTE 3-5 códigos más probables, ordenados por relevancia
+2. Identifica la región anatómica correcta usando el glosario médico contextual
+3. Busca en la lista de códigos NUN disponibles los que mejor coincidan
+4. PRIORIZA códigos de la región anatómica correcta identificada
+5. Identifica palabras clave médicas relevantes (anatomía, técnica quirúrgica, tipo de lesión, etc.)
+6. Considera la complejidad y tipo de procedimiento
+7. Devuelve EXACTAMENTE 3-5 códigos más probables, ordenados por relevancia y confianza
 
 FORMATO DE RESPUESTA (JSON obligatorio):
 {{
     "codigos_sugeridos": [
         {{
             "codigo": "MS.01.01",
-            "motivo": "Explicación breve de por qué este código es relevante",
+            "motivo": "Explicación breve de por qué este código es relevante para la región anatómica identificada",
             "confianza": 0.95
         }}
     ]
@@ -100,10 +130,11 @@ FORMATO DE RESPUESTA (JSON obligatorio):
 
 IMPORTANTE:
 - Solo sugiere códigos que existan en el nomenclador NUN
+- PRIORIZA códigos de la región anatómica correcta
 - La confianza debe ser un número entre 0 y 1
 - Ordena por relevancia (más relevante primero)
 - Responde SOLO en formato JSON
-- Si no encuentras coincidencias claras, sugiere los códigos más cercanos
+- Si no encuentras coincidencias claras, sugiere los códigos más cercanos de la región apropiada
 """
     
     return prompt
