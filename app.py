@@ -4,10 +4,14 @@ import os
 import json
 from openai import OpenAI
 import logging
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Configuration variables
+USE_GPT4O = True  # Set to False to use GPT-3.5 for both region detection and code search
 
 # Page configuration
 st.set_page_config(
@@ -16,6 +20,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# Mobile-friendly viewport
+st.markdown('<meta name="viewport" content="width=device-width, initial-scale=1">', unsafe_allow_html=True)
 
 # Initialize OpenAI client
 @st.cache_resource
@@ -55,7 +62,14 @@ def load_nun_data():
         st.error(f"❌ Error al cargar el archivo CSV: {str(e)}")
         st.stop()
 
-def determine_anatomical_region(client, user_description):
+# Initialize session state for search history
+def init_session_state():
+    """Initialize session state variables"""
+    if "historial" not in st.session_state:
+        st.session_state["historial"] = []
+
+@st.cache_data
+def determine_anatomical_region(user_description, use_gpt4o=True):
     """Step 1: Determine the anatomical region from the medical description"""
     prompt = f"""
 Eres un asistente médico especializado en traumatología y ortopedia. Tu tarea es determinar la región anatómica basándote en la descripción del procedimiento.
@@ -97,8 +111,14 @@ IMPORTANTE:
 """
     
     try:
+        # Get client
+        client = init_openai_client()
+        
+        # Choose model based on configuration
+        model = "gpt-4o" if use_gpt4o else "gpt-3.5-turbo"
+        
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model=model,
             messages=[
                 {
                     "role": "system",
@@ -173,40 +193,54 @@ IMPORTANTE:
     
     return prompt
 
-def query_openai_for_codes(client, user_description, procedures_data):
-    """Two-step process: 1) Determine region, 2) Search filtered codes"""
-    
-    # Step 1: Determine anatomical region
-    with st.spinner("🔍 Identificando región anatómica..."):
-        region, confidence, reason = determine_anatomical_region(client, user_description)
-        
-        if not region:
-            st.error("❌ No se pudo determinar la región anatómica")
-            return []
-        
-        # Show region identification result
-        st.info(f"🎯 **Región identificada:** {region} (Confianza: {confidence:.0%})")
-        st.write(f"**Motivo:** {reason}")
-    
-    # Step 2: Filter procedures by region
-    filtered_procedures = procedures_data[procedures_data['Región'] == region]
-    
-    if filtered_procedures.empty:
-        st.warning(f"⚠️ No se encontraron procedimientos para la región {region}")
-        return []
-    
-    st.info(f"🔎 Buscando entre {len(filtered_procedures)} procedimientos de la región {region}...")
-    
-    # Step 3: Search within filtered procedures
-    # Log token optimization
-    logger.info(f"Token optimization: Searching within {len(filtered_procedures)} procedures instead of full dataset ({len(procedures_data)} procedures)")
+@st.cache_data
+def cached_query_openai_for_codes(user_description, procedures_text, use_gpt4o=True):
+    """Cached function to query OpenAI for procedure codes"""
     try:
-        prompt = create_search_prompt(user_description, filtered_procedures)
+        # Get client
+        client = init_openai_client()
         
-        # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-        # do not change this unless explicitly requested by the user
+        # Choose model based on configuration
+        model = "gpt-3.5-turbo"  # Always use GPT-3.5 for code search as it's sufficient
+        
+        prompt = f"""
+Eres un asistente médico especializado en traumatología y ortopedia. Tu tarea es encontrar los códigos NUN más apropiados para el procedimiento descrito.
+
+DESCRIPCIÓN DEL PROCEDIMIENTO:
+"{user_description}"
+
+LISTA DE PROCEDIMIENTOS POSIBLES:
+{procedures_text}
+
+INSTRUCCIONES:
+1. Analiza la descripción del procedimiento médico
+2. Busca coincidencias EXACTAS en las descripciones primero
+3. Identifica palabras clave médicas relevantes (anatomía, técnica quirúrgica, tipo de lesión, etc.)
+4. Considera la complejidad y tipo de procedimiento
+5. Devuelve EXACTAMENTE 3-5 códigos más probables, ordenados por relevancia y confianza
+
+FORMATO DE RESPUESTA (JSON obligatorio):
+{{
+    "codigos_sugeridos": [
+        {{
+            "codigo": "PC.05.07",
+            "motivo": "Explicación breve de por qué este código es relevante",
+            "confianza": 0.95
+        }}
+    ]
+}}
+
+IMPORTANTE:
+- Solo sugiere códigos que existan en la lista proporcionada
+- Busca coincidencias EXACTAS en las descripciones antes que aproximadas
+- La confianza debe ser un número entre 0 y 1
+- Ordena por relevancia (más relevante primero)
+- Responde SOLO en formato JSON
+- Para "forage de cadera" busca específicamente códigos que contengan "forage" y "cadera"
+"""
+        
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=model,
             messages=[
                 {
                     "role": "system",
@@ -232,6 +266,53 @@ def query_openai_for_codes(client, user_description, procedures_data):
         logger.error(f"Error querying OpenAI: {e}")
         return []
 
+def query_openai_for_codes(user_description, procedures_data):
+    """Two-step process: 1) Determine region, 2) Search filtered codes"""
+    
+    # Step 1: Determine anatomical region (cached)
+    with st.spinner("🔍 Identificando región anatómica..."):
+        region, confidence, reason = determine_anatomical_region(user_description, USE_GPT4O)
+        
+        if not region:
+            st.error("❌ No se pudo determinar la región anatómica")
+            return []
+        
+        # Show region identification result
+        st.info(f"🎯 **Región identificada:** {region} (Confianza: {confidence:.0%})")
+        st.write(f"**Motivo:** {reason}")
+    
+    # Step 2: Filter procedures by region
+    filtered_procedures = procedures_data[procedures_data['Región'] == region]
+    
+    if filtered_procedures.empty:
+        st.warning(f"⚠️ No se encontraron procedimientos para la región {region}")
+        return []
+    
+    st.info(f"🔎 Buscando entre {len(filtered_procedures)} procedimientos de la región {region}...")
+    
+    # Step 3: Search within filtered procedures (cached)
+    # Log token optimization
+    logger.info(f"Token optimization: Searching within {len(filtered_procedures)} procedures instead of full dataset ({len(procedures_data)} procedures)")
+    
+    # Convert filtered procedures to compact text format for caching
+    procedures_list = []
+    for _, row in filtered_procedures.iterrows():
+        codigo = row['Código']
+        descripcion = row['Descripción']
+        procedures_list.append(f"{codigo} - {descripcion}")
+    procedures_text = "\n".join(procedures_list)
+    
+    # 👇 Debug: Imprimir input y cantidad de códigos
+    print("🟢 User description:")
+    print(user_description)
+    print("🔢 Códigos NUN que se mandan:")
+    print(len(filtered_procedures))
+    
+    # Use cached function for OpenAI query
+    suggested_codes = cached_query_openai_for_codes(user_description, procedures_text, USE_GPT4O)
+    
+    return suggested_codes, region
+
 def display_results(suggested_codes, procedures_data):
     """Display the search results in a formatted way"""
     if not suggested_codes:
@@ -251,35 +332,36 @@ def display_results(suggested_codes, procedures_data):
         if not procedure_row.empty:
             row = procedure_row.iloc[0]
             
-            # Create an expander for each result
+            # Create an expander for each result - mobile friendly
             with st.expander(f"🔍 **{i}. {codigo}** - Confianza: {confianza:.0%}", expanded=(i <= 2)):
-                col1, col2 = st.columns([2, 1])
+                # Mobile-friendly layout - stack vertically on small screens
+                st.markdown(f"**📄 Descripción:**")
+                st.write(row['Descripción'])
                 
-                with col1:
-                    st.markdown(f"**📄 Descripción:**")
-                    st.write(row['Descripción'])
-                    
-                    st.markdown(f"**🎯 Motivo de sugerencia:**")
-                    st.write(motivo)
-                    
-                    if 'Región' in row:
-                        st.markdown(f"**🗺️ Región:** {row['Región']}")
-                    if 'Complejidad' in row:
-                        st.markdown(f"**⚙️ Complejidad:** {row['Complejidad']}")
+                st.markdown(f"**🎯 Motivo de sugerencia:**")
+                st.write(motivo)
                 
-                with col2:
-                    st.markdown("**💰 Honorarios**")
-                    
-                    cirujano = row.get('Cirujano', 0)
-                    ayudantes = row.get('Ayudantes', 0)
-                    total = row.get('Total', 0)
-                    
+                if 'Región' in row:
+                    st.markdown(f"**🗺️ Región:** {row['Región']}")
+                if 'Complejidad' in row:
+                    st.markdown(f"**⚙️ Complejidad:** {row['Complejidad']}")
+                
+                # Honorarios section
+                st.markdown("**💰 Honorarios**")
+                
+                cirujano = row.get('Cirujano', 0)
+                ayudantes = row.get('Ayudantes', 0)
+                total = row.get('Total', 0)
+                
+                # Mobile-friendly metrics in columns only if needed
+                if cirujano > 0 or ayudantes > 0 or total > 0:
+                    col1, col2, col3 = st.columns(3)
                     if cirujano > 0:
-                        st.metric("👨‍⚕️ Cirujano", f"${cirujano:,.0f}")
+                        col1.metric("👨‍⚕️ Cirujano", f"${cirujano:,.0f}")
                     if ayudantes > 0:
-                        st.metric("🤝 Ayudantes", f"${ayudantes:,.0f}")
+                        col2.metric("🤝 Ayudantes", f"${ayudantes:,.0f}")
                     if total > 0:
-                        st.metric("💎 Total", f"${total:,.0f}")
+                        col3.metric("💎 Total", f"${total:,.0f}")
                 
                 # Add separator
                 if i < len(suggested_codes):
@@ -287,11 +369,68 @@ def display_results(suggested_codes, procedures_data):
         else:
             st.error(f"❌ Código {codigo} no encontrado en la base de datos")
 
+def add_to_history(user_description, region, suggested_codes):
+    """Add search to session history"""
+    if "historial" not in st.session_state:
+        st.session_state["historial"] = []
+    
+    # Create history entry
+    history_entry = {
+        "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "descripcion": user_description,
+        "region": region,
+        "codigos": suggested_codes[:3]  # Store only top 3 codes
+    }
+    
+    # Add to beginning of history (most recent first)
+    st.session_state["historial"].insert(0, history_entry)
+    
+    # Keep only last 10 searches
+    if len(st.session_state["historial"]) > 10:
+        st.session_state["historial"] = st.session_state["historial"][:10]
+
+def display_search_history():
+    """Display search history in expandable section"""
+    if "historial" not in st.session_state or not st.session_state["historial"]:
+        return
+    
+    st.divider()
+    
+    with st.expander(f"📚 Historial de Búsquedas ({len(st.session_state['historial'])})", expanded=False):
+        for i, entry in enumerate(st.session_state["historial"]):
+            with st.container():
+                st.markdown(f"**🕐 {entry['timestamp']}**")
+                st.markdown(f"**Descripción:** {entry['descripcion']}")
+                st.markdown(f"**Región:** {entry['region']}")
+                
+                if entry['codigos']:
+                    st.markdown("**Códigos encontrados:**")
+                    for j, codigo_info in enumerate(entry['codigos'], 1):
+                        codigo = codigo_info.get('codigo', '')
+                        confianza = codigo_info.get('confianza', 0)
+                        st.write(f"  {j}. {codigo} (Confianza: {confianza:.0%})")
+                
+                if i < len(st.session_state["historial"]) - 1:
+                    st.divider()
+
 def main():
     """Main application function"""
-    # Initialize
-    client = init_openai_client()
+    # Initialize session state
+    init_session_state()
+    
+    # Load data
     procedures_data = load_nun_data()
+    
+    # Configuration info in sidebar (optional)
+    with st.sidebar:
+        st.markdown("### ⚙️ Configuración")
+        current_model = "GPT-4o" if USE_GPT4O else "GPT-3.5 Turbo"
+        st.info(f"**Modelo para región:** {current_model}")
+        st.info(f"**Modelo para códigos:** GPT-3.5 Turbo")
+        
+        if st.button("🗑️ Limpiar Historial"):
+            st.session_state["historial"] = []
+            st.rerun()
     
     # Header
     st.title("🏥 Buscador de Códigos NUN")
@@ -304,7 +443,7 @@ def main():
     st.subheader("🔍 Descripción del Procedimiento")
     st.markdown("Ingrese una descripción libre del procedimiento quirúrgico:")
     
-    # Text area for procedure description
+    # Text area for procedure description - mobile friendly
     user_input = st.text_area(
         "Descripción del procedimiento:",
         placeholder="Ejemplo: fractura desplazada de cúbito y radio con reducción y osteosíntesis con placa",
@@ -312,10 +451,8 @@ def main():
         help="Describa el procedimiento quirúrgico con el mayor detalle posible incluyendo anatomía, tipo de lesión y técnica quirúrgica"
     )
     
-    # Search button
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        search_button = st.button("🔍 Buscar Códigos NUN", type="primary", use_container_width=True)
+    # Search button - mobile friendly, full width
+    search_button = st.button("🔍 Buscar Códigos NUN", type="primary", use_container_width=True)
     
     # Process search
     if search_button:
@@ -324,12 +461,22 @@ def main():
             return
         
         with st.spinner("🤖 Analizando descripción y buscando códigos relevantes..."):
-            suggested_codes = query_openai_for_codes(client, user_input, procedures_data)
+            result = query_openai_for_codes(user_input, procedures_data)
             
-        if suggested_codes:
-            display_results(suggested_codes, procedures_data)
-        else:
-            st.error("❌ Error al procesar la búsqueda. Verifique su conexión a internet y la configuración de la API.")
+            if result and len(result) == 2:
+                suggested_codes, region = result
+                
+                if suggested_codes:
+                    display_results(suggested_codes, procedures_data)
+                    # Add to history
+                    add_to_history(user_input, region, suggested_codes)
+                else:
+                    st.error("❌ Error al procesar la búsqueda. Verifique su conexión a internet y la configuración de la API.")
+            else:
+                st.error("❌ Error al procesar la búsqueda. Verifique su conexión a internet y la configuración de la API.")
+    
+    # Display search history
+    display_search_history()
     
     # Footer
     st.divider()
