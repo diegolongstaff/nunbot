@@ -69,6 +69,7 @@ replit.nix
 .local/
 .upm/
 uv.lock
+pyproject.toml
 
 # Streamlit
 .streamlit/secrets.toml

@@ -11,7 +11,7 @@
 git status
 
 ### 2. Agregar archivos nuevos
-git add README.md requirements.txt .gitignore streamlit_config.toml DEPLOYMENT.md git_commands.txt
+git add README.md requirements.txt .gitignore .streamlit/config.toml DEPLOYMENT.md git_commands.txt
 
 ### 3. Commit con mensaje descriptivo
 git commit -m "feat: Preparar NUNBot para GitHub

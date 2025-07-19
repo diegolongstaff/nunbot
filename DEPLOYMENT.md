@@ -10,8 +10,7 @@
 - `.gitignore` - Archivos excluidos del repositorio
 
 ### ✅ Archivos de Configuración
-- `streamlit_config.toml` - Configuración opcional para Streamlit
-- `.streamlit/config.toml` - Configuración actual de Streamlit
+- `.streamlit/config.toml` - Configuración de Streamlit para despliegue
 
 ### ✅ Verificaciones de Seguridad
 - ✅ No hay claves API hardcodeadas en el código
@@ -26,15 +25,16 @@
 git status
 
 # Agregar archivos nuevos
-git add README.md requirements.txt .gitignore streamlit_config.toml DEPLOYMENT.md
+git add README.md requirements.txt .gitignore .streamlit/config.toml DEPLOYMENT.md
 
 # Commit inicial
 git commit -m "feat: Preparar NUNBot para GitHub
 
 - Agregar README.md con documentación completa
-- Crear requirements.txt con dependencias
+- Crear requirements.txt con versiones estables
 - Configurar .gitignore para archivos sensibles
-- Incluir configuración de Streamlit
+- Configurar Streamlit para puerto 8501 (Streamlit Cloud)
+- Eliminar archivos conflictivos (uv.lock, pyproject.toml)
 - Sistema optimizado de búsqueda en 2 pasos"
 
 # Configurar repositorio remoto

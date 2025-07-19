@@ -45,23 +45,17 @@ source venv/bin/activate  # En Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. **Configurar Streamlit (opcional)**:
-```bash
-mkdir -p .streamlit
-cp streamlit_config.toml .streamlit/config.toml
-```
-
-5. **Configurar variables de entorno**:
+4. **Configurar variables de entorno**:
 ```bash
 export OPENAI_API_KEY="tu_clave_api_aqui"
 ```
 
-6. **Ejecutar la aplicación**:
+5. **Ejecutar la aplicación**:
 ```bash
 streamlit run app.py
 ```
 
-7. **Abrir en el navegador**:
+6. **Abrir en el navegador**:
    - La aplicación se abrirá automáticamente en `http://localhost:8501`
 
 ## Uso
