@@ -21,14 +21,14 @@ Get "http://localhost:8501/healthz": dial tcp 127.0.0.1:8501: connect: connectio
 - **Creado**: `.streamlit/config.toml` con puerto 8501 (estándar de Streamlit Cloud)
 - **Eliminado**: `streamlit_config.toml` (no necesario)
 
-### ✅ 3. Compatibilidad con OpenAI SDK v0.28.1
-- **Problema**: App usaba OpenAI SDK v1.3.9 pero código era para v1.0+
-- **Solución**: Adaptado código para usar OpenAI SDK v0.28.1 (clásico)
+### ✅ 3. Solución Final OpenAI SDK
+- **Problema inicial**: Código incompatible con OpenAI SDK instalado
+- **Solución final**: Usar OpenAI SDK v1.0+ (moderno) con código actualizado
 - **Cambios**: 
-  - `OpenAI(api_key=...)` → `openai.api_key = ...`
-  - `client.chat.completions.create()` → `openai.ChatCompletion.create()`
-  - `response.choices[0].message.content` → `response.choices[0].message["content"]`
-  - Modelo `gpt-4o` → `gpt-4` (compatible con v0.28.1)
+  - Mantener `from openai import OpenAI`
+  - Usar `OpenAI(api_key=...)` para inicializar cliente
+  - Mantener `client.chat.completions.create()` con `response_format={"type": "json_object"}`
+  - Usar modelo `gpt-4o` para mejor rendimiento
 
 ### ✅ 4. .gitignore Actualizado
 - Agregado `pyproject.toml` y `uv.lock` para evitar conflictos futuros
@@ -57,13 +57,13 @@ Get "http://localhost:8501/healthz": dial tcp 127.0.0.1:8501: connect: connectio
 1. **Commit y Push**:
 ```bash
 git add README.md requirements_fixed.txt .gitignore .streamlit/config.toml DEPLOYMENT.md git_commands.txt STREAMLIT_CLOUD_FIX.md app.py
-git commit -m "fix: Resolver conflictos de despliegue y compatibilidad OpenAI
+git commit -m "fix: Resolver conflictos de despliegue en Streamlit Cloud
 
-- Eliminar archivos conflictivos (uv.lock, pyproject.toml)
+- Eliminar archivos conflictivos (uv.lock, pyproject.toml)  
 - Configurar puerto 8501 para Streamlit Cloud
-- Migrar código a OpenAI SDK v0.28.1 (clásico)
-- Actualizar app.py para compatibilidad con versión antigua
-- Usar gpt-4 en lugar de gpt-4o"
+- Corregir código OpenAI SDK para v1.0+ compatibilidad
+- Usar gpt-4o con response_format JSON
+- App funcionando correctamente"
 git push origin main
 ```
 

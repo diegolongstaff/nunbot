@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import json
-import openai
+from openai import OpenAI
 import logging
 
 # Configure logging
@@ -25,8 +25,7 @@ def init_openai_client():
     if not api_key:
         st.error("⚠️ API Key de OpenAI no encontrada. Verifique la variable de entorno OPENAI_API_KEY")
         st.stop()
-    openai.api_key = api_key
-    return True
+    return OpenAI(api_key=api_key)
 
 # Load CSV data
 @st.cache_data
@@ -56,7 +55,7 @@ def load_nun_data():
         st.error(f"❌ Error al cargar el archivo CSV: {str(e)}")
         st.stop()
 
-def determine_anatomical_region(user_description):
+def determine_anatomical_region(client, user_description):
     """Step 1: Determine the anatomical region from the medical description"""
     prompt = f"""
 Eres un asistente médico especializado en traumatología y ortopedia. Tu tarea es determinar la región anatómica basándote en la descripción del procedimiento.
@@ -98,8 +97,8 @@ IMPORTANTE:
 """
     
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
+        response = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {
                     "role": "system",
@@ -110,11 +109,12 @@ IMPORTANTE:
                     "content": prompt
                 }
             ],
+            response_format={"type": "json_object"},
             temperature=0.2,
             max_tokens=500
         )
         
-        result = json.loads(response.choices[0].message["content"])
+        result = json.loads(response.choices[0].message.content)
         return result.get("region", ""), result.get("confianza", 0), result.get("motivo", "")
         
     except Exception as e:
@@ -173,12 +173,12 @@ IMPORTANTE:
     
     return prompt
 
-def query_openai_for_codes(user_description, procedures_data):
+def query_openai_for_codes(client, user_description, procedures_data):
     """Two-step process: 1) Determine region, 2) Search filtered codes"""
     
     # Step 1: Determine anatomical region
     with st.spinner("🔍 Identificando región anatómica..."):
-        region, confidence, reason = determine_anatomical_region(user_description)
+        region, confidence, reason = determine_anatomical_region(client, user_description)
         
         if not region:
             st.error("❌ No se pudo determinar la región anatómica")
@@ -203,9 +203,10 @@ def query_openai_for_codes(user_description, procedures_data):
     try:
         prompt = create_search_prompt(user_description, filtered_procedures)
         
-        # Using gpt-4 model for compatibility with OpenAI SDK v1.3.9
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
+        # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+        # do not change this unless explicitly requested by the user
+        response = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {
                     "role": "system",
@@ -216,11 +217,12 @@ def query_openai_for_codes(user_description, procedures_data):
                     "content": prompt
                 }
             ],
+            response_format={"type": "json_object"},
             temperature=0.3,
             max_tokens=1500
         )
         
-        result = json.loads(response.choices[0].message["content"])
+        result = json.loads(response.choices[0].message.content)
         return result.get("codigos_sugeridos", [])
         
     except json.JSONDecodeError as e:
@@ -288,7 +290,7 @@ def display_results(suggested_codes, procedures_data):
 def main():
     """Main application function"""
     # Initialize
-    init_openai_client()  # This sets openai.api_key globally
+    client = init_openai_client()
     procedures_data = load_nun_data()
     
     # Header
@@ -322,7 +324,7 @@ def main():
             return
         
         with st.spinner("🤖 Analizando descripción y buscando códigos relevantes..."):
-            suggested_codes = query_openai_for_codes(user_input, procedures_data)
+            suggested_codes = query_openai_for_codes(client, user_input, procedures_data)
             
         if suggested_codes:
             display_results(suggested_codes, procedures_data)
