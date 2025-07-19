@@ -128,7 +128,7 @@ def create_search_prompt(user_description, filtered_procedures):
     procedures_list = []
     for _, row in filtered_procedures.iterrows():
         codigo = row['Código']
-        descripcion = row['Palabras clave']
+        descripcion = row['Descripción']
         # Create compact format: CODE - DESCRIPTION
         procedures_list.append(f"{codigo} - {descripcion}")
     
