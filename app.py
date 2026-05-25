@@ -150,16 +150,14 @@ def main():
     st.subheader("🔍 Descripción del Procedimiento")
     st.markdown("Ingrese una descripción libre del procedimiento quirúrgico:")
 
-    user_input = st.text_area(
-        "Descripción del procedimiento:",
-        placeholder="Ejemplo: fractura desplazada de cúbito y radio con reducción y osteosíntesis con placa",
-        height=120,
-        help="Describa el procedimiento quirúrgico con el mayor detalle posible incluyendo anatomía, tipo de lesión y técnica quirúrgica",
-    )
-
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        search_button = st.button("🔍 Buscar Códigos NUN", type="primary", use_container_width=True)
+    with st.form("nunbot_search_form", clear_on_submit=False):
+        user_input = st.text_area(
+            "Descripción del procedimiento:",
+            placeholder="Ejemplo: fractura desplazada de cúbito y radio con reducción y osteosíntesis con placa",
+            height=120,
+            help="Describa el procedimiento quirúrgico con el mayor detalle posible incluyendo anatomía, tipo de lesión y técnica quirúrgica",
+        )
+        search_button = st.form_submit_button("🔍 Buscar Códigos NUN", type="primary", use_container_width=True)
 
     if search_button:
         search_id = uuid.uuid4().hex[:8]
