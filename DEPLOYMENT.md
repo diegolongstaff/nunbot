@@ -1,132 +1,111 @@
-# Guía de Despliegue de NUNBot
+# NUNBot Deployment Guide
 
-## Archivos Preparados para GitHub
+## Target production layout
 
-### ✅ Archivos Principales
-- `app.py` - Aplicación principal de Streamlit
-- `nun_procedimientos.csv` - Base de datos de códigos NUN (665 procedimientos)
-- `README.md` - Documentación completa del proyecto
-- `requirements.txt` - Dependencias Python
-- `.gitignore` - Archivos excluidos del repositorio
+- **Source repo:** `/home/diegol/apps/nunbot`
+- **Deployment root:** `/opt/nunbot`
+- **Application container port:** `8501`
+- **Host loopback port for Nginx:** `127.0.0.1:8502`
+- **Public domain:** `https://nunbot.myserverlongstaff.com`
 
-### ✅ Archivos de Configuración
-- `.streamlit/config.toml` - Configuración de Streamlit para despliegue
+## Runtime requirements
 
-### ✅ Verificaciones de Seguridad
-- ✅ No hay claves API hardcodeadas en el código
-- ✅ Variables de entorno configuradas correctamente
-- ✅ Archivos sensibles incluidos en .gitignore
+- Docker Engine already installed on the server
+- Docker Compose plugin
+- Nginx reverse proxy already running on the host
+- Let's Encrypt certificate for `nunbot.myserverlongstaff.com`
+- `OPENAI_API_KEY` available in `/opt/nunbot/.env`
 
-## Pasos para Subir a GitHub
+## Deployment approach
 
-### 1. Preparación del Repositorio
+NUNBot is deployed as a Docker Compose stack under `/opt/nunbot` with:
+
+- immutable image build from the repository
+- `restart: unless-stopped` for boot persistence
+- Nginx proxying HTTPS traffic to `127.0.0.1:8502`
+- no bind mount of the source tree in production
+
+## Initial deployment
+
 ```bash
-# Verificar estado actual
-git status
-
-# Agregar archivos nuevos
-git add README.md requirements.txt .gitignore .streamlit/config.toml DEPLOYMENT.md
-
-# Commit inicial
-git commit -m "feat: Preparar NUNBot para GitHub
-
-- Agregar README.md con documentación completa
-- Crear requirements.txt con versiones estables
-- Configurar .gitignore para archivos sensibles
-- Configurar Streamlit para puerto 8501 (Streamlit Cloud)
-- Eliminar archivos conflictivos (uv.lock, pyproject.toml)
-- Sistema optimizado de búsqueda en 2 pasos"
-
-# Configurar repositorio remoto
-git remote add origin https://github.com/diegolongstaff/nunbot.git
-
-# Subir al repositorio
-git push -u origin main
+cd /opt/nunbot
+cp .env.example .env   # then edit OPENAI_API_KEY
+docker compose up -d --build
 ```
 
-### 2. Despliegue en Streamlit Cloud
+Then ensure the Nginx site is using `nginx/nunbot.conf` as the source of truth and reload Nginx.
 
-#### Opción A: Streamlit Cloud (Recomendado)
-1. Ir a [share.streamlit.io](https://share.streamlit.io)
-2. Conectar cuenta de GitHub
-3. Seleccionar repositorio: `diegolongstaff/nunbot`
-4. Configurar:
-   - Main file path: `app.py`
-   - Python version: `3.11`
-5. Agregar secret: `OPENAI_API_KEY` en la sección de secrets
-6. Deploy automático
+## Validate the stack
 
-#### Opción B: Railway
-1. Ir a [railway.app](https://railway.app)
-2. Conectar GitHub
-3. Seleccionar repositorio
-4. Configurar variable de entorno: `OPENAI_API_KEY`
-5. Deploy automático
-
-#### Opción C: Heroku
-1. Crear `Procfile`:
+```bash
+docker compose ps
+docker compose logs --tail=100
+curl -I http://127.0.0.1:8502/
 ```
-web: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0
+
+Then validate HTTPS externally:
+
+```bash
+curl -I https://nunbot.myserverlongstaff.com/
 ```
-2. Configurar variables de entorno en Heroku
-3. Deploy desde GitHub
 
-### 3. Configuración Post-Despliegue
+## Nginx config
 
-#### Variables de Entorno Requeridas
-- `OPENAI_API_KEY`: Clave API de OpenAI
+Use the file in `nginx/nunbot.conf` as the source of truth.
 
-#### Verificaciones
-- ✅ Aplicación carga correctamente
-- ✅ Base de datos CSV se lee sin errores
-- ✅ API de OpenAI responde correctamente
-- ✅ Búsqueda en 2 pasos funciona
-- ✅ Códigos NUN se muestran correctamente
+Important proxy settings:
 
-## Optimizaciones Implementadas
+- `proxy_http_version 1.1`
+- `Upgrade` / `Connection` headers for WebSocket support
+- `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`
+- long read/send timeouts
+- existing certificate paths under `/etc/letsencrypt/live/nunbot.myserverlongstaff.com/`
 
-### 🚀 Rendimiento
-- Sistema de búsqueda en 2 pasos reduce tokens en ~70%
-- Filtrado por región anatómica antes de enviar a OpenAI
-- Caching de datos con Streamlit
-- Formato compacto "CÓDIGO - DESCRIPCIÓN"
+After changing Nginx:
 
-### 🔒 Seguridad
-- Claves API manejadas mediante variables de entorno
-- Archivos sensibles excluidos del repositorio
-- Logs de tokens para monitoreo
+```bash
+nginx -t
+systemctl reload nginx
+```
 
-### 📱 Usabilidad
-- Interface intuitiva para médicos
-- Feedback visual del proceso de búsqueda
-- Información detallada de honorarios
-- Confianza y motivos de sugerencias
+## Startup persistence
 
-## Métricas de Uso
+The container uses `restart: unless-stopped`, so Docker will bring it back automatically after host reboot as long as Docker starts normally.
 
-### Datos del Sistema
-- **Base de datos**: 665 procedimientos NUN
-- **Regiones**: 5 anatómicas (MS, CO, PC, RO, PP)
-- **Tokens por consulta**: 3,000-5,000 (vs 46,000 anterior)
-- **Precisión**: Búsqueda exacta + filtrado regional
+## Update workflow
 
-### Ejemplos de Uso
-- "forage de cadera" → PC.05.07
-- "fractura de muñeca" → Región MS
-- "luxación de rodilla" → Región RO
+1. Pull or sync the newest code into `/opt/nunbot`.
+2. Rebuild the image:
 
-## Soporte y Mantenimiento
+```bash
+cd /opt/nunbot
+docker compose up -d --build
+```
 
-### Actualizaciones de Datos
-- Actualizar `nun_procedimientos.csv` con nuevos códigos
-- Verificar consistencia de regiones anatómicas
-- Probar búsquedas con nuevos procedimientos
+3. Watch logs if needed:
 
-### Monitoreo
-- Verificar logs de tokens en producción
-- Monitorear errores de OpenAI
-- Analizar patrones de búsqueda más comunes
+```bash
+docker compose logs -f
+```
 
----
+4. Re-check the HTTP and HTTPS endpoints.
 
-**Proyecto listo para despliegue en GitHub y plataformas cloud**
+## Rollback workflow
+
+If the new version misbehaves:
+
+```bash
+cd /opt/nunbot
+git log --oneline --decorate -n 5
+git checkout <previous-commit>
+docker compose up -d --build
+```
+
+If the issue is only in the container image, you can also restore the previous image tag if it was retained locally.
+
+## Backup / safety notes
+
+- Keep `/etc/nginx/sites-available/nunbot` backed up before edits.
+- Do not remove the existing certificate files; Nginx depends on them.
+- Do not touch Immich, Heimdall, Wake, or SSH configuration.
+- Keep the source repo and deployment root cleanly separated.

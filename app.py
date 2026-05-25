@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import time
 import uuid
 from typing import Any
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 # Page configuration
 st.set_page_config(
     page_title="Buscador de Códigos NUN",
-    page_icon="🏥",
+    page_icon="N",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -42,7 +43,7 @@ def init_openai_client():
     return OpenAI(api_key=api_key)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def load_nun_data():
     """Load and cache the NUN dataset."""
     try:
@@ -74,6 +75,65 @@ def _preview_query(text: str, limit: int = 120) -> str:
     if len(normalized) <= limit:
         return normalized
     return normalized[: max(0, limit - 1)].rstrip() + "…"
+
+
+def _parse_intish(value: Any) -> int | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return None
+    match = re.search(r"(\d+)", text)
+    if match:
+        return int(match.group(1))
+    try:
+        return int(float(text.replace(",", "")))
+    except (TypeError, ValueError):
+        return None
+
+
+def _format_currency(value: Any) -> str:
+    try:
+        return f"${float(value):,.0f}"
+    except (TypeError, ValueError):
+        return "$0"
+
+
+def _resolve_helper_pricing(row) -> tuple[int, float, float]:
+    complexity = _parse_intish(row.get("Complejidad"))
+    explicit_count = _parse_intish(row.get("Cantidad de ayudantes"))
+    helper_count = explicit_count if explicit_count is not None else 0
+
+    if helper_count == 0 and complexity is not None:
+        if complexity <= 1:
+            helper_count = 0
+        elif complexity <= 4:
+            helper_count = 1
+        else:
+            helper_count = 2
+
+    total_helpers_amount = row.get("Total ayudantes", row.get("Ayudantes", 0))
+    per_helper_amount = row.get("Honorario por ayudante", None)
+
+    if per_helper_amount in (None, ""):
+        per_helper_amount = 0.0
+        if helper_count > 0:
+            try:
+                per_helper_amount = float(total_helpers_amount) / helper_count
+            except (TypeError, ValueError, ZeroDivisionError):
+                per_helper_amount = 0.0
+    else:
+        try:
+            per_helper_amount = float(per_helper_amount)
+        except (TypeError, ValueError):
+            per_helper_amount = 0.0
+
+    try:
+        total_helpers_amount = float(total_helpers_amount)
+    except (TypeError, ValueError):
+        total_helpers_amount = 0.0
+
+    return helper_count, per_helper_amount, total_helpers_amount
 
 
 def display_results(suggested_codes, procedures_data):
@@ -113,15 +173,26 @@ def display_results(suggested_codes, procedures_data):
                     st.markdown("**💰 Honorarios**")
 
                     cirujano = row.get("Cirujano", 0)
-                    ayudantes = row.get("Ayudantes", 0)
                     total = row.get("Total", 0)
+                    helper_count, per_helper_amount, total_helpers_amount = _resolve_helper_pricing(row)
 
                     if cirujano > 0:
-                        st.metric("👨‍⚕️ Cirujano", f"${cirujano:,.0f}")
-                    if ayudantes > 0:
-                        st.metric("🤝 Ayudantes", f"${ayudantes:,.0f}")
+                        st.metric("👨‍⚕️ Cirujano", _format_currency(cirujano))
+
+                    if helper_count == 0:
+                        st.info("Sin ayudantes")
+                    elif helper_count == 1:
+                        st.metric("🤝 Ayudante", _format_currency(per_helper_amount))
+                    else:
+                        st.caption(f"{helper_count} ayudantes — cada uno cobra {_format_currency(per_helper_amount)}")
+                        helper_cols = st.columns(helper_count)
+                        for idx in range(helper_count):
+                            with helper_cols[idx]:
+                                st.metric(f"🤝 Ayudante {idx + 1}", _format_currency(per_helper_amount))
+                        st.caption(f"Total ayudantes: {_format_currency(total_helpers_amount)}")
+
                     if total > 0:
-                        st.metric("💎 Total", f"${total:,.0f}")
+                        st.metric("💎 Total", _format_currency(total))
 
                 if i < len(suggested_codes):
                     st.divider()
@@ -131,23 +202,24 @@ def display_results(suggested_codes, procedures_data):
 
 def main():
     """Main application function."""
-    health_issues = check_runtime_health()
-    if health_issues:
-        st.error("⚠️ NUNBot no puede iniciar porque faltan requisitos básicos:")
-        for issue in health_issues:
-            st.write(f"- {issue}")
-        st.stop()
+    render_count = st.session_state.get("nunbot_render_count", 0) + 1
+    st.session_state["nunbot_render_count"] = render_count
+    logger.info("app_rendered count=%s", render_count)
 
-    client = init_openai_client()
-    procedures_data = load_nun_data()
-
-    st.title("🏥 Buscador de Códigos NUN")
+    st.title("Buscador de Códigos NUN")
     st.markdown("**Sistema de búsqueda inteligente para códigos del Nomenclador Único Nacional**")
     st.markdown("*Especialmente diseñado para traumatología y ortopedia*")
+    st.caption("La interfaz aparece primero; la base de datos y la API se cargan solo cuando buscás.")
+
+    health_issues = check_runtime_health(require_openai_key=False)
+    data_path_issue = next((issue for issue in health_issues if issue.startswith("No se encontró el archivo de datos NUN")), None)
+    if data_path_issue:
+        st.error(data_path_issue)
+        st.stop()
 
     st.divider()
 
-    st.subheader("🔍 Descripción del Procedimiento")
+    st.subheader("Descripción del Procedimiento")
     st.markdown("Ingrese una descripción libre del procedimiento quirúrgico:")
 
     with st.form("nunbot_search_form", clear_on_submit=False):
@@ -170,6 +242,8 @@ def main():
             st.warning(f"⚠️ {validation_message}")
             return
 
+        client = init_openai_client()
+        procedures_data = load_nun_data()
         cache_key = _build_search_cache_key(user_input, procedures_data)
         search_cache = _get_search_cache()
         cached_result = search_cache.get(cache_key)

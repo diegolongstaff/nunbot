@@ -408,13 +408,18 @@ def _chat_json_with_retry(
 
     for attempt in range(retry_attempts + 1):
         try:
-            response = request_client.chat.completions.create(
-                model=model,
-                messages=messages,
-                response_format={"type": "json_object"},
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
+            completion_kwargs: dict[str, Any] = {
+                "model": model,
+                "messages": messages,
+                "response_format": {"type": "json_object"},
+                "temperature": temperature,
+            }
+            if str(model).startswith("gpt-5"):
+                completion_kwargs["max_completion_tokens"] = max_tokens
+            else:
+                completion_kwargs["max_tokens"] = max_tokens
+
+            response = request_client.chat.completions.create(**completion_kwargs)
             content = response.choices[0].message.content or "{}"
             return _parse_json_content(content)
         except Exception as exc:  # pragma: no cover - exercised via integration/runtime, not deterministic unit tests
