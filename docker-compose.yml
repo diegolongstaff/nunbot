@@ -1,0 +1,16 @@
+services:
+  nunbot:
+    build: .
+    image: nunbot:latest
+    container_name: nunbot
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    environment:
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+    volumes:
+      - .:/app

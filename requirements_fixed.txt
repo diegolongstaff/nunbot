@@ -1,3 +1,4 @@
+# Runtime dependencies for NUNBot
 streamlit==1.40.0
 pandas==2.2.3
-openai>=1.0.0
+openai==2.32.0
