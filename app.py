@@ -1,5 +1,7 @@
 import logging
 import os
+import time
+import uuid
 from typing import Any
 
 import streamlit as st
@@ -14,7 +16,11 @@ from nunbot_core import (
 )
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 # Page configuration
@@ -61,6 +67,13 @@ def _build_search_cache_key(user_input: str, procedures_data) -> tuple[Any, ...]
     normalized_input = normalize_search_query(user_input)
     code_signature = hash(tuple(procedures_data["Código"].astype(str).tolist())) if "Código" in procedures_data.columns else 0
     return (normalized_input, os.getenv("NUNBOT_MODEL", "gpt-4o"), len(procedures_data), code_signature)
+
+
+def _preview_query(text: str, limit: int = 120) -> str:
+    normalized = normalize_search_query(text)
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: max(0, limit - 1)].rstrip() + "…"
 
 
 def display_results(suggested_codes, procedures_data):
@@ -149,8 +162,13 @@ def main():
         search_button = st.button("🔍 Buscar Códigos NUN", type="primary", use_container_width=True)
 
     if search_button:
+        search_id = uuid.uuid4().hex[:8]
+        query_preview = _preview_query(user_input)
+        logger.info("search_started id=%s query=%r", search_id, query_preview)
+
         is_valid, validation_message = validate_search_query(user_input)
         if not is_valid:
+            logger.info("search_rejected id=%s reason=%r query=%r", search_id, validation_message, query_preview)
             st.warning(f"⚠️ {validation_message}")
             return
 
@@ -158,18 +176,44 @@ def main():
         search_cache = _get_search_cache()
         cached_result = search_cache.get(cache_key)
 
-        if cached_result is not None:
-            region, confidence, reason, suggested_codes, local_candidates, used_fallback = cached_result
-            st.caption("Resultados reutilizados desde la caché de la sesión.")
-        else:
-            with st.spinner("🤖 Analizando descripción y buscando códigos relevantes..."):
-                cached_result = search_nun_codes(
-                    client,
-                    user_input,
-                    procedures_data,
+        try:
+            if cached_result is not None:
+                region, confidence, reason, suggested_codes, local_candidates, used_fallback = cached_result
+                logger.info(
+                    "search_cache_hit id=%s query=%r region=%s suggestions=%s fallback=%s",
+                    search_id,
+                    query_preview,
+                    region or "",
+                    len(suggested_codes),
+                    used_fallback,
                 )
-            search_cache[cache_key] = cached_result
-            region, confidence, reason, suggested_codes, local_candidates, used_fallback = cached_result
+                st.caption("Resultados reutilizados desde la caché de la sesión.")
+            else:
+                with st.spinner("🤖 Analizando descripción y buscando códigos relevantes..."):
+                    start = time.perf_counter()
+                    cached_result = search_nun_codes(
+                        client,
+                        user_input,
+                        procedures_data,
+                    )
+                    elapsed = time.perf_counter() - start
+                search_cache[cache_key] = cached_result
+                region, confidence, reason, suggested_codes, local_candidates, used_fallback = cached_result
+                logger.info(
+                    "search_completed id=%s query=%r elapsed=%.2fs region=%s confidence=%.2f suggestions=%s local_candidates=%s fallback=%s",
+                    search_id,
+                    query_preview,
+                    elapsed,
+                    region or "",
+                    confidence,
+                    len(suggested_codes),
+                    len(local_candidates),
+                    used_fallback,
+                )
+        except Exception:
+            logger.exception("search_failed id=%s query=%r", search_id, query_preview)
+            st.error("❌ Ocurrió un error interno durante la búsqueda. Revisá los logs del contenedor.")
+            return
 
         if region:
             st.info(f"🎯 **Región identificada:** {region} (Confianza: {confidence:.0%})")
@@ -185,6 +229,7 @@ def main():
         if suggested_codes:
             display_results(suggested_codes, procedures_data)
         else:
+            logger.warning("search_empty_results query=%r region=%s fallback=%s", query_preview, region or "", used_fallback)
             st.error("❌ Error al procesar la búsqueda. Verifique su conexión a internet y la configuración de la API.")
 
     st.divider()
